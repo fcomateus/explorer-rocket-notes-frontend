@@ -6,7 +6,8 @@ import { Textarea } from '../../components/Textarea'
 import { NoteItem } from '../../components/NoteItem'
 import { Section } from '../../components/Section'
 import { Button } from '../../components/Button'
-import { useNavigate, Link } from "react-router-dom"
+import { ButtonText } from '../../components/ButtonText'
+import { useNavigate } from "react-router-dom"
 
 import { Container, Form } from './stlyes'
 
@@ -21,6 +22,10 @@ export function New(){
     const [newTag, setNewTag] = useState("");
 
     const navigate = useNavigate();
+
+    function handleBack() {
+        navigate(-1);
+    }
 
     function handleAddLink() {
         setLinks( prevState => [...prevState, newLink]);
@@ -41,6 +46,19 @@ export function New(){
     }
 
     async function handleNewNote() {
+        if(!title) {
+            return alert("Digite o título da nota");
+        }
+
+        if(newLink) {
+            return alert("Você deixou um link no campo para adicionar, mas não clicou em adicionar. Clique para adicionar ou deixe o campo vazio");
+
+        }
+
+        if(newTag) {
+            return alert("Você deixou uma tag no campo para adicionar, mas não clicou em adicionar. Clique para adicionar ou deixe o campo vazio");
+        }
+
         const note = {
             title,
             description,
@@ -59,7 +77,7 @@ export function New(){
             }
         }
 
-        navigate("/");
+        navigate(-1);
 
     }
 
@@ -71,7 +89,11 @@ export function New(){
                 <Form>
                     <header>
                         <h1>Criar nota</h1>
-                        <Link to="/">Voltar</Link>
+                        
+                        <ButtonText 
+                            title="Voltar"
+                            onClick={handleBack}
+                        />
                     </header>
 
                     <Input

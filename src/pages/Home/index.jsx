@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FiPlus, FiSearch } from 'react-icons/fi'
-
+import { api } from '../../services/api'
 import { Container, Brand, Menu, Search, Content, NewNote } from './styles'
 
 import { Header } from '../../components/Header'
@@ -9,6 +11,57 @@ import { Input } from '../../components/Input'
 import { Note } from '../../components/Note'
 
 export function Home(){
+    const [search, setSearch] = useState("");
+    const [tags, setTags] = useState([]);
+    const [tagsSelected, setTagsSelected] = useState([]);
+    const [notes, setNotes] = useState([]);
+
+    const navigate = useNavigate();
+
+    function handleTagSelection(tagName) {
+        if(tagName === 'all') {
+            return setTagsSelected([]);
+        }
+
+        const alreadySelected = tagsSelected.includes(tagName);
+        
+        if(alreadySelected) {
+            const filteredTags = tagsSelected.filter(tag => tag !== tagName);
+            setTagsSelected(filteredTags);
+            
+        } else {
+            setTagsSelected((prevState => [...prevState, tagName]));
+        }
+
+        console.log(tagsSelected);
+        
+        
+    }
+
+    function handleDetails(id) {
+        navigate(`/details/${id}`);
+    }
+
+    useEffect(() => {
+        async function fetchTags() {
+            const response = await api.get("/tags");
+            setTags(response.data)
+        }
+        
+        fetchTags();
+    },[])
+
+    useEffect(() => {
+        async function fetchNotes() {
+            const response = await api.get(`/notes?title=${search}&tags=${tagsSelected}`);
+            setNotes(response.data);
+        }
+
+        fetchNotes();
+
+    },[tagsSelected, search]);
+
+
     return(
         <Container>
             <Brand>
@@ -18,27 +71,50 @@ export function Home(){
             <Header/>
 
             <Menu>
-                <li><ButtonText title="Todos" isActive/></li>
-                <li><ButtonText title="React"/></li>
-                <li><ButtonText title="Nodejs"/></li>
+                <li>
+                    <ButtonText 
+                        title="Todos" 
+                        isActive={tagsSelected.length === 0}
+                        onClick={() => handleTagSelection("all")}
+
+                    />
+                </li>
+                {
+                    tags && tags.map(tag => {
+                        return(
+                            <li key={String(tag.id)}>
+                                <ButtonText
+                                    title={tag.name}
+                                    isActive={tagsSelected.includes(tag.name)}
+                                    onClick={() => handleTagSelection(tag.name)}
+                                    />
+                            </li>
+                        )
+                    })
+                    
+                }
             </Menu>
 
             <Search>
-                <Input placeholder="Pesquisar pelo título" icon={FiSearch}/>
+                <Input 
+                    placeholder="Pesquisar pelo título" icon={FiSearch}
+                    onChange={(e) => setSearch(e.target.value)}    
+                />
             </Search>
 
             <Content>
                 <Section title="Minhas notas">
-                    <Note
-                        data={{
-                            title: 'React',
-                            tags: [
-                                {id: '1', name: 'React'},
-                                {id: '2', name: 'Nodejs'}
-
-                            ]
-                        }}
-                    />
+                    {
+                        notes.map(note => {
+                            return(
+                                <Note
+                                key={String(note.id)}
+                                data={note}
+                                onClick={() => {handleDetails(note.id)}}
+                                />
+                            )
+                        })
+                    }
                                
                 </Section>
             </Content>
